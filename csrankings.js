@@ -1247,7 +1247,7 @@ class CSRankings {
         let outputHTML;
         if (this.isTopProfessorsView) {
             // Generate Top Professors view
-            outputHTML = this.buildTopProfessorsTable(facultyAdjustedCount, deptNames);
+            outputHTML = this.buildTopProfessorsTable(facultyAdjustedCount, facultycount, deptNames);
         }
         else {
             // Generate default University view
@@ -1777,7 +1777,7 @@ class CSRankings {
         this.rank();
     }
     /* Build the Top Professors table */
-    buildTopProfessorsTable(facultyAdjustedCount, deptNames) {
+    buildTopProfessorsTable(facultyAdjustedCount, facultycount, deptNames) {
         // Create array of all professors with their data
         const allProfessors = [];
         // Iterate through all departments and collect faculty data
@@ -1792,6 +1792,7 @@ class CSRankings {
                         name: name,
                         affiliation: dept,
                         adjustedCount: facultyAdjustedCount[name],
+                        rawCount: facultycount[name] || 0,
                         homepage: homepage,
                         scholarid: scholarid
                     });
@@ -1807,10 +1808,10 @@ class CSRankings {
         html += '<thead style="background-color: #f5f5f5;">';
         html += '<tr>';
         html += '<th style="width: 5%; text-align: center;">#</th>';
-        html += '<th style="width: 25%;">Professor</th>';
-        html += '<th style="width: 15%; text-align: center;">Score</th>';
-        html += '<th style="width: 30%;">Affiliation</th>';
-        html += '<th style="width: 25%; text-align: center;">Links</th>';
+        html += '<th style="width: 35%;">Faculty</th>';
+        html += '<th style="width: 15%; text-align: center;"># Pubs</th>';
+        html += '<th style="width: 15%; text-align: center;">Adj. #</th>';
+        html += '<th style="width: 30%;">Institution</th>';
         html += '</tr>';
         html += '</thead>';
         html += '<tbody>';
@@ -1819,29 +1820,22 @@ class CSRankings {
         for (let i = 0; i < maxProfessors; i++) {
             const prof = allProfessors[i];
             const rank = i + 1;
-            const score = (Math.round(10.0 * prof.adjustedCount) / 10.0).toFixed(1);
+            const adjustedScore = (Math.round(10.0 * prof.adjustedCount) / 10.0).toFixed(1);
             html += '<tr>';
             html += `<td style="text-align: center; font-weight: bold;">${rank}</td>`;
-            // Professor name (with homepage link if available)
+            // Faculty name (with homepage link if available)
             if (prof.homepage && prof.homepage !== "") {
                 html += `<td><a href="${prof.homepage}" target="_blank" style="color: #337ab7; text-decoration: none;">${prof.name}</a></td>`;
             }
             else {
                 html += `<td>${prof.name}</td>`;
             }
-            html += `<td style="text-align: center; font-weight: bold; color: #337ab7;">${score}</td>`;
+            // Raw publication count
+            html += `<td style="text-align: center;">${prof.rawCount}</td>`;
+            // Adjusted publication count
+            html += `<td style="text-align: center; font-weight: bold; color: #337ab7;">${adjustedScore}</td>`;
+            // Institution
             html += `<td>${prof.affiliation}</td>`;
-            // Links column
-            html += '<td style="text-align: center;">';
-            if (prof.homepage && prof.homepage !== "") {
-                html += `<a href="${prof.homepage}" target="_blank" title="Homepage"><span style="color: #337ab7;">🏠</span></a>`;
-            }
-            if (prof.scholarid && prof.scholarid !== "" && prof.scholarid !== "NOSCHOLARPAGE") {
-                if (prof.homepage && prof.homepage !== "")
-                    html += ' ';
-                html += `<a href="https://scholar.google.com/citations?user=${prof.scholarid}" target="_blank" title="Google Scholar"><img src="scholar-favicon.ico" alt="Google Scholar" height="16" width="16"></a>`;
-            }
-            html += '</td>';
             html += '</tr>';
         }
         html += '</tbody>';
