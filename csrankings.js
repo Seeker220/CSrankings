@@ -5,6 +5,15 @@
   @author Emery Berger <emery@cs.umass.edu> http://www.emeryberger.com
 
 */
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 /// <reference path="./typescript/he/index.d.ts" />
 /// <reference path="./typescript/jquery.d.ts" />
 /// <reference path="./typescript/vega-embed.d.ts" />
@@ -282,13 +291,13 @@ class CSRankings {
             }
         }
         this.displayProgress(1);
-        (async () => {
-            await this.loadTuring(this.turing);
-            await this.loadACMFellow(this.acmfellow);
+        (() => __awaiter(this, void 0, void 0, function* () {
+            yield this.loadTuring(this.turing);
+            yield this.loadACMFellow(this.acmfellow);
             this.displayProgress(2);
-            await this.loadAuthorInfo();
+            yield this.loadAuthorInfo();
             this.displayProgress(3);
-            await this.loadAuthors();
+            yield this.loadAuthors();
             this.setAllOn();
             this.navigoRouter.on({
                 '/index': this.navigation,
@@ -296,8 +305,8 @@ class CSRankings {
             }).resolve();
             this.displayProgress(4);
             this.countAuthorAreas();
-            await this.loadCountryInfo(this.countryInfo, this.countryAbbrv);
-            await this.loadCountryNames(this.countryNames);
+            yield this.loadCountryInfo(this.countryInfo, this.countryAbbrv);
+            yield this.loadCountryNames(this.countryNames);
             this.addListeners();
             CSRankings.geoCheck();
             this.rank();
@@ -336,7 +345,7 @@ class CSRankings {
                     document.getElementById("overlay-sponsor").style.display = "block";
                 }
             }
-        })();
+        }))();
     }
     translateNameToDBLP(name) {
         // Ex: "Emery D. Berger" -> "http://dblp.uni-trier.de/pers/hd/b/Berger:Emery_D="
@@ -655,104 +664,116 @@ class CSRankings {
             progress.innerHTML = s;
         }
     }
-    async loadTuring(turing) {
-        const data = await new Promise((resolve) => {
-            Papa.parse(this.turingFile, {
-                header: true,
-                download: true,
-                complete: (results) => {
-                    resolve(results.data);
-                }
+    loadTuring(turing) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = yield new Promise((resolve) => {
+                Papa.parse(this.turingFile, {
+                    header: true,
+                    download: true,
+                    complete: (results) => {
+                        resolve(results.data);
+                    }
+                });
             });
-        });
-        const d = data;
-        for (const turingPair of d) {
-            turing[turingPair.name] = turingPair.year;
-        }
-    }
-    async loadACMFellow(acmfellow) {
-        const data = await new Promise((resolve) => {
-            Papa.parse(this.acmfellowFile, {
-                header: true,
-                download: true,
-                complete: (results) => {
-                    resolve(results.data);
-                }
-            });
-        });
-        const d = data;
-        for (const acmfellowPair of d) {
-            acmfellow[acmfellowPair.name] = acmfellowPair.year;
-        }
-    }
-    async loadCountryInfo(countryInfo, countryAbbrv) {
-        const data = await new Promise((resolve) => {
-            Papa.parse(this.countryinfoFile, {
-                header: true,
-                download: true,
-                complete: (results) => {
-                    resolve(results.data);
-                }
-            });
-        });
-        const ci = data;
-        for (const info of ci) {
-            countryInfo[info.institution] = info.region;
-            countryAbbrv[info.institution] = info.countryabbrv;
-        }
-    }
-    async loadCountryNames(countryNames) {
-        const data = await new Promise((resolve) => {
-            Papa.parse(this.countrynamesFile, {
-                header: true,
-                download: true,
-                complete: (results) => {
-                    resolve(results.data);
-                }
-            });
-        });
-        const ci = data;
-        for (const info of ci) {
-            countryNames[info.alpha_2] = info.name;
-        }
-    }
-    async loadAuthorInfo() {
-        const data = await new Promise((resolve) => {
-            Papa.parse(this.authorFile, {
-                download: true,
-                header: true,
-                complete: (results) => {
-                    resolve(results.data);
-                }
-            });
-        });
-        const ai = data;
-        for (let counter = 0; counter < ai.length; counter++) {
-            const record = ai[counter];
-            let name = record['name'].trim();
-            const result = name.match(CSRankings.nameMatcher);
-            if (result) {
-                name = result[1].trim();
-                this.note[name] = result[2];
+            const d = data;
+            for (const turingPair of d) {
+                turing[turingPair.name] = turingPair.year;
             }
-            if (name !== "") {
-                this.dblpAuthors[name] = this.translateNameToDBLP(name);
-                this.homepages[name] = record['homepage'];
-                this.scholarInfo[name] = record['scholarid'];
-            }
-        }
-    }
-    async loadAuthors() {
-        const data = await new Promise((resolve) => {
-            Papa.parse(this.authorinfoFile, {
-                download: true,
-                header: true,
-                complete: (results) => {
-                    resolve(results.data);
-                }
-            });
         });
-        this.authors = data;
+    }
+    loadACMFellow(acmfellow) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = yield new Promise((resolve) => {
+                Papa.parse(this.acmfellowFile, {
+                    header: true,
+                    download: true,
+                    complete: (results) => {
+                        resolve(results.data);
+                    }
+                });
+            });
+            const d = data;
+            for (const acmfellowPair of d) {
+                acmfellow[acmfellowPair.name] = acmfellowPair.year;
+            }
+        });
+    }
+    loadCountryInfo(countryInfo, countryAbbrv) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = yield new Promise((resolve) => {
+                Papa.parse(this.countryinfoFile, {
+                    header: true,
+                    download: true,
+                    complete: (results) => {
+                        resolve(results.data);
+                    }
+                });
+            });
+            const ci = data;
+            for (const info of ci) {
+                countryInfo[info.institution] = info.region;
+                countryAbbrv[info.institution] = info.countryabbrv;
+            }
+        });
+    }
+    loadCountryNames(countryNames) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = yield new Promise((resolve) => {
+                Papa.parse(this.countrynamesFile, {
+                    header: true,
+                    download: true,
+                    complete: (results) => {
+                        resolve(results.data);
+                    }
+                });
+            });
+            const ci = data;
+            for (const info of ci) {
+                countryNames[info.alpha_2] = info.name;
+            }
+        });
+    }
+    loadAuthorInfo() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = yield new Promise((resolve) => {
+                Papa.parse(this.authorFile, {
+                    download: true,
+                    header: true,
+                    complete: (results) => {
+                        resolve(results.data);
+                    }
+                });
+            });
+            const ai = data;
+            for (let counter = 0; counter < ai.length; counter++) {
+                const record = ai[counter];
+                let name = record['name'].trim();
+                const result = name.match(CSRankings.nameMatcher);
+                if (result) {
+                    name = result[1].trim();
+                    this.note[name] = result[2];
+                }
+                if (name !== "") {
+                    this.dblpAuthors[name] = this.translateNameToDBLP(name);
+                    this.homepages[name] = record['homepage'];
+                    this.scholarInfo[name] = record['scholarid'];
+                }
+            }
+        });
+    }
+    loadAuthors() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = yield new Promise((resolve) => {
+                Papa.parse(this.authorinfoFile, {
+                    download: true,
+                    header: true,
+                    complete: (results) => {
+                        resolve(results.data);
+                    }
+                });
+            });
+            this.authors = data;
+        });
     }
     inRegion(dept, regions) {
         switch (regions) {
