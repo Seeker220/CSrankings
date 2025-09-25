@@ -1166,7 +1166,7 @@ class CSRankings {
                 }
                 const country = (_a = this.countryNames[abbrv.toUpperCase()]) !== null && _a !== void 0 ? _a : abbrv.toUpperCase();
                 s += "&nbsp;" + `<span onclick="csr.toggleFaculty('${esc}');">${dept}</span>`
-                    + `&nbsp;<img  title="${country}" src="/flags/${abbrv}.png">&nbsp;`
+                    + `&nbsp;<img  title="${country}" src="flags/${abbrv}.png">&nbsp;`
                     + `<span class="hovertip" onclick='csr.toggleChart("${esc}"); ga("send", "event", "chart", "toggle-department", "toggle ${esc} ${$("#charttype").find(":selected").val()} chart");' id='${esc + "-chartwidget"}'>`
                     + this.ChartIcon + "</span>";
                 s += "</td>";
@@ -1778,6 +1778,7 @@ class CSRankings {
     }
     /* Build the Top Professors table */
     buildTopProfessorsTable(facultyAdjustedCount, facultycount, deptNames) {
+        var _a;
         // Create array of all professors with their data
         const allProfessors = [];
         // Iterate through all departments and collect faculty data
@@ -1834,8 +1835,13 @@ class CSRankings {
             html += `<td style="text-align: center;">${prof.rawCount}</td>`;
             // Adjusted publication count
             html += `<td style="text-align: center; font-weight: bold; color: #337ab7;">${adjustedScore}</td>`;
-            // Institution
-            html += `<td>${prof.affiliation}</td>`;
+            // Institution (with flag)
+            let abbrv = "us";
+            if (prof.affiliation in this.countryAbbrv) {
+                abbrv = this.countryAbbrv[prof.affiliation];
+            }
+            const country = (_a = this.countryNames[abbrv.toUpperCase()]) !== null && _a !== void 0 ? _a : abbrv.toUpperCase();
+            html += `<td>${prof.affiliation}&nbsp;<img title="${country}" src="flags/${abbrv}.png"></td>`;
             html += '</tr>';
         }
         html += '</tbody>';
