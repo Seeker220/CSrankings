@@ -84,6 +84,14 @@ interface ChartData {
     readonly value: number;
 };
 
+interface TopProfessorData {
+    readonly name: string;
+    readonly affiliation: string;
+    readonly adjustedCount: number;
+    readonly homepage: string;
+    readonly scholarid: string;
+};
+
 class CSRankings {
 
     private static theInstance: CSRankings; // singleton for this object
@@ -96,6 +104,7 @@ class CSRankings {
     private static readonly nameMatcher = new RegExp('(.*)\\s+\\[(.*)\\]'); // Matches names followed by [X] notes.
 
     private note: { [name: string]: string } = {};
+    private isTopProfessorsView: boolean = false;
 
     private navigoRouter: Navigo;
 
@@ -1545,7 +1554,16 @@ class CSRankings {
         console.log(`Before render: rank took ${(stop - start)} milliseconds.`);
 
         /* Finally done. Redraw! */
-        document.getElementById("success")!.innerHTML = s;
+        let outputHTML: string;
+        if (this.isTopProfessorsView) {
+            // Generate Top Professors view
+            outputHTML = this.buildTopProfessorsTable(facultyAdjustedCount, deptNames);
+        } else {
+            // Generate default University view
+            outputHTML = s;
+        }
+        
+        document.getElementById("success")!.innerHTML = outputHTML;
         $("div").scroll(function() {
             // console.log("scrollTop = " + this.scrollTop + ", clientHeight = " + this.clientHeight + ", scrollHeight = " + this.scrollHeight);
             // If we are nearly at the bottom, update the minimum.
@@ -2046,6 +2064,135 @@ class CSRankings {
                 listeners[item]();
             });
         }
+        
+        // Add listeners for Top Professors view toggle buttons
+        const topProfessorsButton = document.getElementById('top_professors_button');
+        if (topProfessorsButton) {
+            topProfessorsButton.addEventListener("click", () => {
+                this.showTopProfessorsView();
+            });
+        }
+        
+        const universityViewButton = document.getElementById('university_view_button');
+        if (universityViewButton) {
+            universityViewButton.addEventListener("click", () => {
+                this.showUniversityView();
+            });
+        }
+    }
+    
+    /* Show the Top Professors view */
+    private showTopProfessorsView(): void {
+        this.isTopProfessorsView = true;
+        
+        // Toggle button visibility
+        const topProfButton = document.getElementById('top_professors_button');
+        const universityButton = document.getElementById('university_view_button');
+        if (topProfButton) topProfButton.style.display = 'none';
+        if (universityButton) universityButton.style.display = 'inline-block';
+        
+        // Regenerate the rankings in professors view
+        this.rank();
+    }
+    
+    /* Show the University view (default) */
+    private showUniversityView(): void {
+        this.isTopProfessorsView = false;
+        
+        // Toggle button visibility
+        const topProfButton = document.getElementById('top_professors_button');
+        const universityButton = document.getElementById('university_view_button');
+        if (topProfButton) topProfButton.style.display = 'inline-block';
+        if (universityButton) universityButton.style.display = 'none';
+        
+        // Regenerate the rankings in university view
+        this.rank();
+    }
+    
+    /* Build the Top Professors table */
+    private buildTopProfessorsTable(facultyAdjustedCount: { [key: string]: number },
+        deptNames: { [key: string]: Array<string> }): string {
+        
+        // Create array of all professors with their data
+        const allProfessors: TopProfessorData[] = [];
+        
+        // Iterate through all departments and collect faculty data
+        for (const dept in deptNames) {
+            if (!deptNames.hasOwnProperty(dept)) continue;
+            
+            for (const name of deptNames[dept]) {
+                if (facultyAdjustedCount[name] > 0) { // Only include professors with publications
+                    const homepage = this.homepages[name] || "";
+                    const scholarid = this.scholarInfo[name] || "";
+                    
+                    allProfessors.push({
+                        name: name,
+                        affiliation: dept,
+                        adjustedCount: facultyAdjustedCount[name],
+                        homepage: homepage,
+                        scholarid: scholarid
+                    });
+                }
+            }
+        }
+        
+        // Sort professors by adjusted count (descending)
+        allProfessors.sort((a, b) => b.adjustedCount - a.adjustedCount);
+        
+        // Build the HTML table
+        let html = '<div class="table-responsive">';
+        html += '<h3 style="margin-bottom: 20px; color: #337ab7;">Top Professors Worldwide</h3>';
+        html += '<table class="table table-sm table-striped table-bordered">';
+        html += '<thead style="background-color: #f5f5f5;">';
+        html += '<tr>';
+        html += '<th style="width: 5%; text-align: center;">#</th>';
+        html += '<th style="width: 25%;">Professor</th>';
+        html += '<th style="width: 15%; text-align: center;">Score</th>';
+        html += '<th style="width: 30%;">Affiliation</th>';
+        html += '<th style="width: 25%; text-align: center;">Links</th>';
+        html += '</tr>';
+        html += '</thead>';
+        html += '<tbody>';
+        
+        // Add top professors (limit to reasonable number for performance)
+        const maxProfessors = Math.min(500, allProfessors.length);
+        for (let i = 0; i < maxProfessors; i++) {
+            const prof = allProfessors[i];
+            const rank = i + 1;
+            const score = (Math.round(10.0 * prof.adjustedCount) / 10.0).toFixed(1);
+            
+            html += '<tr>';
+            html += `<td style="text-align: center; font-weight: bold;">${rank}</td>`;
+            
+            // Professor name (with homepage link if available)
+            if (prof.homepage && prof.homepage !== "") {
+                html += `<td><a href="${prof.homepage}" target="_blank" style="color: #337ab7; text-decoration: none;">${prof.name}</a></td>`;
+            } else {
+                html += `<td>${prof.name}</td>`;
+            }
+            
+            html += `<td style="text-align: center; font-weight: bold; color: #337ab7;">${score}</td>`;
+            html += `<td>${prof.affiliation}</td>`;
+            
+            // Links column
+            html += '<td style="text-align: center;">';
+            if (prof.homepage && prof.homepage !== "") {
+                html += `<a href="${prof.homepage}" target="_blank" title="Homepage"><span style="color: #337ab7;">🏠</span></a>`;
+            }
+            if (prof.scholarid && prof.scholarid !== "" && prof.scholarid !== "NOSCHOLARPAGE") {
+                if (prof.homepage && prof.homepage !== "") html += ' ';
+                html += `<a href="https://scholar.google.com/citations?user=${prof.scholarid}" target="_blank" title="Google Scholar"><img src="scholar-favicon.ico" alt="Google Scholar" height="16" width="16"></a>`;
+            }
+            html += '</td>';
+            
+            html += '</tr>';
+        }
+        
+        html += '</tbody>';
+        html += '</table>';
+        html += '</div>';
+        
+        return html;
     }
 }
 
